@@ -100,7 +100,8 @@ if (!passwordRegex.test(password)) {
 }
 
 
-    const response = await fetch("http://localhost:5000/api/auth/signup", {
+    const response = await fetch("https://secure-login-app-m6ew.onrender.com/api/otp/send-otp", {
+
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -128,7 +129,7 @@ if (!passwordRegex.test(password)) {
       return;
     }
 
-    const res = await fetch("/api/otp/send-otp", {
+    const res = await fetch("https://secure-login-app-m6ew.onrender.com/api/otp/send-otp", {
 
       method: "POST",
       headers: {
@@ -154,7 +155,8 @@ if (!passwordRegex.test(password)) {
     const password = document.getElementById("password").value;
     const otp = document.getElementById("otp").value;
 
-    const res = await fetch("http://localhost:5000/api/auth/signup", {
+    const res = await fetch("https://secure-login-app-m6ew.onrender.com/api/otp/send-otp", {
+
       method: "POST",
       headers: {
         "Content-Type": "application/json"
