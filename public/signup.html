@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<head>
+  <title>Signup</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial;
+      background-color: #f2f2f2;
+    }
+
+    .box {
+      background: white;
+      padding: 30px;
+      width: 300px;
+      text-align: center;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Signup Page</h2>
+
+  <form id="signupForm">
+
+  <input type="text" id="name" placeholder="Name" required><br><br>
+  <input type="email" id="email" placeholder="Email" required><br><br>
+  <div style="position: relative; width: 220px;">
+
+    <div style="position:relative;">
+  <input type="password" id="password" placeholder="Password">
+
+  <span onclick="togglePassword()"
+        style="
+          position:absolute;
+          right:10px;
+          top:50%;
+          transform:translateY(-50%);
+          cursor:pointer;">
+    👁
+  </span>
+</div>
+
+      <!-- Send OTP button -->
+  <button type="button" onclick="sendOTP()">Send OTP</button>
+
+
+
+    <!-- OTP section (hidden initially) -->
+  <div id="otpSection" style="display:none;">
+    <input type="text" id="otp" placeholder="Enter OTP" required>
+    <button type="submit">Verify OTP & Signup</button>
+  </div>
+
+</form>
+
+
+</div>
+<br><br>
+
+  <button type="submit">Signup</button>
+</form>
+
+<p id="message"></p>
+</div>
+
+<script>
+  const form = document.getElementById("signupForm");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+
+    // Password strength check
+const passwordRegex =
+  /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+if (!passwordRegex.test(password)) {
+  document.getElementById("message").innerText =
+    "Password must have 1 capital letter, 1 number, 1 symbol and min 8 characters";
+  return; // STOP form submission
+}
+
+
+    const response = await fetch("http://localhost:5000/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await response.json();
+    document.getElementById("message").innerText = data.message;
+  });
+  function togglePassword() {
+  const pwd = document.getElementById("password");
+  pwd.type = pwd.type === "password" ? "text" : "password";
+}
+
+</script>
+
+<script>
+  // Send OTP to email
+  async function sendOTP() {
+    const email = document.getElementById("email").value;
+
+    if (!email) {
+      alert("Please enter email first");
+      return;
+    }
+
+    const res = await fetch("/api/otp/send-otp", {
+
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await res.json();
+    document.getElementById("message").innerText = data.message;
+
+    if (res.ok) {
+      document.getElementById("otpSection").style.display = "block";
+    }
+  }
+
+  // Final signup with OTP
+  document.getElementById("signupForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const otp = document.getElementById("otp").value;
+
+    const res = await fetch("http://localhost:5000/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name, email, password, otp })
+    });
+
+    const data = await res.json();
+    document.getElementById("message").innerText = data.message;
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Profile</title>
+</head>
+<body>
+
+  <h2>Profile Page</h2>
+  <p id="msg"></p>
+
+  <button onclick="logout()">Logout</button>
+
+  <script>
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      window.location.href = "login.html";
+    }
+
+    fetch("http://localhost:5000/api/auth/profile", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("msg").innerText = data.message;
+    })
+    .catch(() => {
+      document.getElementById("msg").innerText = "Access denied ❌";
+    });
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+    }
+  </script>
+
+</body>
+</html>
