@@ -61,7 +61,7 @@
       const password = document.getElementById("password").value;
 
       try {
-        const res = await fetch("http://localhost:5000/api/auth/login", {
+        const res = await fetch("https://secure-login-app-m6ew.onrender.com/api/otp/send-otp", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
