@@ -18,6 +18,10 @@ router.post("/send-otp", async (req, res) => {
   const otp = generateOTP();
   otpStore[email] = otp;
 
+console.log("EMAIL USER:", process.env.EMAIL_USER);
+console.log("EMAIL PASS EXISTS:", !!process.env.EMAIL_PASS);
+
+
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",

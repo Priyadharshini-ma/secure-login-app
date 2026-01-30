@@ -1,13 +1,14 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const cors = require("cors");
 const otpRoutes = require("./routes/otp");
 const path = require("path");
 
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
 
-dotenv.config();
 
 const app = express();
 app.use(cors());
