@@ -11,54 +11,53 @@ function generateOTP() {
 router.post("/send-otp", async (req, res) => {
   const { email } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ message: "Email is required" });
-  }
+  if (!email) return res.status(400).json({ message: "Email is required" });
 
   const otp = generateOTP();
-  otpStore[email] = otp;
-
-console.log("EMAIL USER:", process.env.EMAIL_USER);
-console.log("EMAIL PASS EXISTS:", !!process.env.EMAIL_PASS);
-
+  otpStore[email] = { otp, expires: Date.now() + 5 * 60 * 1000 }; // 5 min
 
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
     });
 
-    await transporter.verify();
-console.log("SMTP server is ready");
-
-
     await transporter.sendMail({
       from: `"OTP Verification" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your OTP Code",
-      text: `Your OTP is ${otp}.`,
+      text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
     });
 
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
-  console.error("OTP MAIL ERROR:", err);
-  res.status(500).json({ message: "OTP send failed" });
-}
-
+    console.error("OTP MAIL ERROR:", err);
+    res.status(500).json({ message: "OTP send failed", error: err.message });
+  }
 });
 
 router.post("/verify-otp", (req, res) => {
   const { email, otp } = req.body;
 
-  if (otpStore[email] === otp) {
+  const record = otpStore[email];
+  if (!record) return res.status(400).json({ message: "OTP expired or not found" });
+
+  if (Date.now() > record.expires) {
     delete otpStore[email];
-    res.json({ message: "OTP verified" });
-  } else {
-    res.status(400).json({ message: "Invalid OTP" });
+    return res.status(400).json({ message: "OTP expired" });
   }
+
+  if (record.otp === otp) {
+    delete otpStore[email];
+    return res.json({ message: "OTP verified" });
+  }
+
+  res.status(400).json({ message: "Invalid OTP" });
 });
 
 module.exports = router;
