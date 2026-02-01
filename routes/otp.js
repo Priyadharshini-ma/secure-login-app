@@ -11,6 +11,11 @@ function generateOTP() {
 router.post("/send-otp", async (req, res) => {
   const { email } = req.body;
 
+  console.log("✅ OTP request received for:", email);
+  console.log("EMAIL_USER:", process.env.EMAIL_USER);
+  console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+
+
   if (!email) return res.status(400).json({ message: "Email is required" });
 
   const otp = generateOTP();
