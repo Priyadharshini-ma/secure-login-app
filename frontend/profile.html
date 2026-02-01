@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Profile</title>
 
   <style>
@@ -9,13 +10,17 @@
       font-family: Arial;
       background: #f4f6f8;
       padding: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
     }
 
     .card {
       background: white;
-      padding: 20px;
+      padding: 25px;
       border-radius: 10px;
-      max-width: 450px;
+      max-width: 480px;
+      width: 100%;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
@@ -29,11 +34,16 @@
       margin-top: 15px;
     }
 
+    button:hover {
+      opacity: 0.9;
+    }
+
     #msg {
       margin-top: 10px;
       color: #333;
       font-size: 15px;
-      min-height: 20px;
+      min-height: 24px;
+      white-space: pre-line; /* ✅ allows \n to show */
     }
   </style>
 </head>
@@ -43,15 +53,22 @@
   <div class="card">
     <h2>Profile Page</h2>
     <p id="msg">Loading...</p>
-    <button onclick="logout()">Logout</button>
+    <button id="logoutBtn">Logout</button>
   </div>
 
   <script>
     const BASE_URL = "https://secure-login-app-production.up.railway.app";
     const token = localStorage.getItem("token");
 
+    // ✅ If token missing → redirect immediately
     if (!token) {
-      window.location.href = "login.html";
+      window.location.replace("login.html");
+    }
+
+    const msgEl = document.getElementById("msg");
+
+    function show(msg) {
+      msgEl.innerText = msg;
     }
 
     async function loadProfile() {
@@ -59,33 +76,41 @@
         const res = await fetch(`${BASE_URL}/api/auth/profile`, {
           method: "GET",
           headers: {
-            "Authorization": "Bearer " + token
+            "Authorization": `Bearer ${token}`
           }
         });
 
         const data = await res.json();
 
         if (res.ok) {
-          document.getElementById("msg").innerText =
-            `✅ ${data.message}\nUser ID: ${data.user?.userId || ""}`;
+          // ✅ If backend sends user object, show more details
+          const userInfo =
+            data.user?.name || data.user?.email || data.user?.userId
+              ? `\nUser: ${data.user?.name || data.user?.email || data.user?.userId}`
+              : "";
+
+          show(`✅ ${data.message || "Authorized"}${userInfo}`);
         } else {
-          document.getElementById("msg").innerText = data.message || "Access denied ❌";
+          show(data.message || "Access denied ❌");
+
+          // ✅ token invalid/expired -> clear and redirect
           localStorage.removeItem("token");
-          setTimeout(() => window.location.href = "login.html", 1000);
+          setTimeout(() => window.location.replace("login.html"), 1000);
         }
       } catch (err) {
         console.error(err);
-        document.getElementById("msg").innerText = "Server / network error ❌";
+        show("Server / network error ❌");
       }
     }
 
     loadProfile();
 
-    function logout() {
+    document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("token");
-      window.location.href = "login.html";
-    }
+      window.location.replace("login.html");
+    });
   </script>
 
 </body>
 </html>
+

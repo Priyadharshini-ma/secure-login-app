@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login</title>
 
   <style>
@@ -40,6 +41,11 @@
       font-size: 16px;
     }
 
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     #result {
       margin-top: 12px;
       min-height: 20px;
@@ -54,10 +60,10 @@
 <div class="box">
   <h2>Login Page</h2>
 
-  <form id="loginForm">
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <button type="submit">Login</button>
+  <form id="loginForm" autocomplete="off">
+    <input type="email" id="email" placeholder="Email" required autocomplete="email" />
+    <input type="password" id="password" placeholder="Password" required autocomplete="current-password" />
+    <button type="submit" id="loginBtn">Login</button>
   </form>
 
   <p id="result"></p>
@@ -69,6 +75,7 @@
 
   const form = document.getElementById("loginForm");
   const result = document.getElementById("result");
+  const loginBtn = document.getElementById("loginBtn");
 
   function show(msg) {
     result.innerText = msg;
@@ -85,26 +92,25 @@
       return;
     }
 
+    loginBtn.disabled = true;
     show("Logging in...");
 
     try {
       const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
       });
 
       const data = await res.json();
 
-      if (res.ok) {
+      if (res.ok && data.token) {
         show("Login successful ✅");
 
         // ✅ Save token
         localStorage.setItem("token", data.token);
 
-        // redirect to profile
+        // redirect
         window.location.href = "profile.html";
       } else {
         show(data.message || "Login failed ❌");
@@ -113,6 +119,8 @@
     } catch (error) {
       console.error(error);
       show("Server / network error ❌");
+    } finally {
+      loginBtn.disabled = false;
     }
   });
 </script>
