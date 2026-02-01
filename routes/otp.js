@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const nodemailer = require("nodemailer");
 
 let otpStore = {};
 
@@ -12,38 +11,39 @@ router.post("/send-otp", async (req, res) => {
   const { email } = req.body;
 
   console.log("✅ OTP request received for:", email);
-  console.log("SMTP_HOST:", process.env.SMTP_HOST);
-  console.log("SMTP_PORT:", process.env.SMTP_PORT);
-  console.log("SMTP_USER:", process.env.SMTP_USER);
-  console.log("SMTP_PASS exists:", !!process.env.SMTP_PASS);
+  console.log("BREVO_API_KEY exists:", !!process.env.BREVO_API_KEY);
 
   if (!email) return res.status(400).json({ message: "Email is required" });
 
   const otp = generateOTP();
-  otpStore[email] = { otp, expires: Date.now() + 5 * 60 * 1000 }; // 5 min
+  otpStore[email] = { otp, expires: Date.now() + 5 * 60 * 1000 };
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
       },
-      tls: { rejectUnauthorized: false },
+      body: JSON.stringify({
+        sender: { name: "Secure Login App", email: "noreply@secureloginapp.com" },
+        to: [{ email }],
+        subject: "Your OTP Code",
+        textContent: `Your OTP is ${otp}. It is valid for 5 minutes.`,
+      }),
     });
 
-    await transporter.sendMail({
-      from: `OTP Verification <${process.env.SMTP_USER}>`,   // ✅ FIXED
-      to: email,
-      subject: "Your OTP Code",
-      text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
-    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Brevo API Error:", result);
+      return res.status(500).json({ message: "OTP send failed", error: result });
+    }
 
     return res.json({ message: "OTP sent successfully" });
   } catch (err) {
-    console.error("❌ OTP MAIL ERROR FULL:", err);
+    console.error("❌ OTP API ERROR:", err);
     return res.status(500).json({ message: "OTP send failed", error: err.message });
   }
 });
