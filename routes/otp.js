@@ -27,8 +27,8 @@ router.post("/send-otp", async (req, res) => {
         "api-key": process.env.BREVO_API_KEY,
       },
       body: JSON.stringify({
-        sender: { name: "Secure Login App", email: "noreply@secureloginapp.com" },
-        to: [{ email }],
+        sender: { name: "Secure Login App", email: "priyanu2419@gmail.com" },
+        replyTo: { name: "Support", email: "priyanu2419@gmail.com"},
         subject: "Your OTP Code",
         textContent: `Your OTP is ${otp}. It is valid for 5 minutes.`,
       }),

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Signup</title>
 
   <style>
@@ -18,7 +19,7 @@
     .box {
       background: white;
       padding: 30px;
-      width: 320px;
+      width: 340px;
       text-align: center;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
@@ -35,16 +36,23 @@
       cursor: pointer;
       border: none;
       border-radius: 6px;
+      font-weight: 600;
     }
 
     #sendOtpBtn { background: #007bff; color: white; }
     #signupBtn { background: #28a745; color: white; }
+
+    #sendOtpBtn:disabled, #signupBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
     #message {
       margin-top: 12px;
       color: #333;
       font-size: 14px;
       min-height: 20px;
+      word-break: break-word;
     }
   </style>
 </head>
@@ -75,7 +83,7 @@
 
     <!-- OTP section -->
     <div id="otpSection" style="display:none;">
-      <input type="text" id="otp" placeholder="Enter OTP" required />
+      <input type="text" id="otp" placeholder="Enter OTP" inputmode="numeric" maxlength="6" required />
       <button type="submit" id="signupBtn">Verify OTP & Signup</button>
     </div>
   </form>
@@ -84,8 +92,12 @@
 </div>
 
 <script>
-  // ✅ Use your Railway backend URL
+  // ✅ Railway backend URL (keep this)
   const BASE_URL = "https://secure-login-app-production.up.railway.app";
+
+  const sendOtpBtn = document.getElementById("sendOtpBtn");
+  const signupBtn = document.getElementById("signupBtn");
+  const otpSection = document.getElementById("otpSection");
 
   function togglePassword() {
     const pwd = document.getElementById("password");
@@ -103,13 +115,22 @@
     return passwordRegex.test(password);
   }
 
+  // ✅ helper: safe JSON read
+  async function readJSON(res) {
+    try {
+      return await res.json();
+    } catch {
+      return {};
+    }
+  }
+
   // ✅ Send OTP
   async function sendOTP() {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
     if (!email) {
-      alert("Please enter email first");
+      showMessage("Please enter email first");
       return;
     }
 
@@ -118,6 +139,9 @@
       return;
     }
 
+    // disable button while sending
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.innerText = "Sending...";
     showMessage("Sending OTP...");
 
     try {
@@ -127,15 +151,22 @@
         body: JSON.stringify({ email }),
       });
 
-      const data = await res.json();
-      showMessage(data.message || "OTP response received");
+      const data = await readJSON(res);
 
-      if (res.ok) {
-        document.getElementById("otpSection").style.display = "block";
+      if (!res.ok) {
+        showMessage(data.message || "OTP send failed");
+        return;
       }
+
+      showMessage("OTP sent successfully ✅ Check Inbox/Spam");
+      otpSection.style.display = "block";
+
     } catch (err) {
       console.error(err);
-      showMessage("OTP send failed (network error)");
+      showMessage("OTP send failed ❌ (network error)");
+    } finally {
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.innerText = "Send OTP";
     }
   }
 
@@ -158,6 +189,9 @@
       return;
     }
 
+    signupBtn.disabled = true;
+    signupBtn.innerText = "Verifying...";
+
     try {
       // ✅ Step 1: verify OTP
       showMessage("Verifying OTP...");
@@ -167,32 +201,41 @@
         body: JSON.stringify({ email, otp }),
       });
 
-      const verifyData = await verifyRes.json();
+      const verifyData = await readJSON(verifyRes);
 
       if (!verifyRes.ok) {
-        showMessage(verifyData.message || "OTP verification failed");
+        showMessage(verifyData.message || "OTP verification failed ❌");
         return;
       }
 
       // ✅ Step 2: signup user
       showMessage("OTP verified ✅ Signing up...");
+      signupBtn.innerText = "Signing up...";
+
       const signupRes = await fetch(`${BASE_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
       });
 
-      const signupData = await signupRes.json();
-      showMessage(signupData.message || "Signup done");
+      const signupData = await readJSON(signupRes);
 
-      if (signupRes.ok) {
-        alert("✅ Signup successful! Now login.");
-        window.location.href = "login.html";
+      if (!signupRes.ok) {
+        showMessage(signupData.message || "Signup failed ❌");
+        return;
       }
+
+      showMessage("Signup successful ✅ Redirecting to login...");
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1000);
 
     } catch (err) {
       console.error(err);
-      showMessage("Signup failed (network error)");
+      showMessage("Signup failed ❌ (network error)");
+    } finally {
+      signupBtn.disabled = false;
+      signupBtn.innerText = "Verify OTP & Signup";
     }
   });
 </script>
