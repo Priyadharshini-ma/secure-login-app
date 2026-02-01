@@ -1,34 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Profile</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f8;
+      padding: 30px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 450px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      background: #dc3545;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    #msg {
+      margin-top: 10px;
+      color: #333;
+      font-size: 15px;
+      min-height: 20px;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h2>Profile Page</h2>
-  <p id="msg"></p>
-
-  <button onclick="logout()">Logout</button>
+  <div class="card">
+    <h2>Profile Page</h2>
+    <p id="msg">Loading...</p>
+    <button onclick="logout()">Logout</button>
+  </div>
 
   <script>
+    const BASE_URL = "https://secure-login-app-production.up.railway.app";
     const token = localStorage.getItem("token");
 
     if (!token) {
       window.location.href = "login.html";
     }
 
-    fetch("https://secure-login-app-m6ew.onrender.com/api/otp/send-otp", {
-      headers: {
-        "Authorization": "Bearer " + token
+    async function loadProfile() {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/profile`, {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          document.getElementById("msg").innerText =
+            `✅ ${data.message}\nUser ID: ${data.user?.userId || ""}`;
+        } else {
+          document.getElementById("msg").innerText = data.message || "Access denied ❌";
+          localStorage.removeItem("token");
+          setTimeout(() => window.location.href = "login.html", 1000);
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById("msg").innerText = "Server / network error ❌";
       }
-    })
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("msg").innerText = data.message;
-    })
-    .catch(() => {
-      document.getElementById("msg").innerText = "Access denied ❌";
-    });
+    }
+
+    loadProfile();
 
     function logout() {
       localStorage.removeItem("token");

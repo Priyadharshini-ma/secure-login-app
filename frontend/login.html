@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Login</title>
 
   <style>
@@ -17,7 +18,7 @@
     .box {
       background: white;
       padding: 30px;
-      width: 300px;
+      width: 320px;
       text-align: center;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
@@ -27,6 +28,23 @@
       width: 100%;
       padding: 10px;
       margin-top: 10px;
+      box-sizing: border-box;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      font-size: 16px;
+    }
+
+    #result {
+      margin-top: 12px;
+      min-height: 20px;
+      color: #333;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -37,55 +55,67 @@
   <h2>Login Page</h2>
 
   <form id="loginForm">
-
-
     <input type="email" id="email" placeholder="Email" required />
-    <br><br>
-
     <input type="password" id="password" placeholder="Password" required />
-    <br><br>
-
     <button type="submit">Login</button>
   </form>
 
   <p id="result"></p>
-  </div>
+</div>
 
-  <script>
-    const form = document.getElementById("loginForm");
+<script>
+  // ✅ Railway backend URL
+  const BASE_URL = "https://secure-login-app-production.up.railway.app";
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  const form = document.getElementById("loginForm");
+  const result = document.getElementById("result");
 
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  function show(msg) {
+    result.innerText = msg;
+  }
 
-      try {
-        const res = await fetch("https://secure-login-app-m6ew.onrender.com/api/otp/send-otp", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ email, password })
-        });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        const data = await res.json();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
 
-        if (res.ok) {
-          document.getElementById("result").innerText = "Login successful ✅";
-          console.log("TOKEN:", data.token);
+    if (!email || !password) {
+      show("Please enter email and password");
+      return;
+    }
 
-          // save token
-          localStorage.setItem("token", data.token);
-        } else {
-          document.getElementById("result").innerText = data.message;
-        }
+    show("Logging in...");
 
-      } catch (error) {
-        document.getElementById("result").innerText = "Server error ❌";
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        show("Login successful ✅");
+
+        // ✅ Save token
+        localStorage.setItem("token", data.token);
+
+        // redirect to profile
+        window.location.href = "profile.html";
+      } else {
+        show(data.message || "Login failed ❌");
       }
-    });
-  </script>
+
+    } catch (error) {
+      console.error(error);
+      show("Server / network error ❌");
+    }
+  });
+</script>
 
 </body>
 </html>
