@@ -11,9 +11,10 @@ if (process.env.NODE_ENV !== "production") {
 const app = express();
 
 app.use(cors({
-  origin: "*",
+  origin: "https://grand-kulfi-8d88af.netlify.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
 }));
+
 
 app.use(express.json());
 
